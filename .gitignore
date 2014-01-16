@@ -1,0 +1,8 @@
+.DS_Store
+.Python
+*.pyc
+bin/
+lib/
+include/
+backup
+uaa.db

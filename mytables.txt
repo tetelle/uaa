@@ -1,0 +1,61 @@
+create table users(
+userid int not null auto_increment primary key,
+username varchar(30) not null,
+password varchar(60) not null,
+fullname varchar(50),
+phone varchar(20),
+email varchar(30),
+alert_hours int,
+alert_minutes int,
+active int);
+
+create table sensors(
+	sensorid int not null auto_increment primary key,
+	sensorname varchar(50),
+	phonenumber varchar(20),
+	userref int,
+	flag varchar(3) not null default 'off',
+	lastping timestamp,
+	lastnotify timestamp
+);
+
+//category is 'Simple' or 'Advanced'
+//Simple will have one every day starting time, one every day ending time
+//Advanced will have 7 start times, 7 end times (one for everyday of the week)  
+create table schedule( 
+	id int not null auto_increment primary key, 
+	user int, 
+	category varchar(8), 
+	daily_start varchar(4), 
+	daily_end varchar(4), 
+	monday_start varchar(4), 
+	monday_end varchar(4), 
+	tuesday_start varchar(4), 
+	tuesday_end varchar(4), 
+	wednesday_start varchar(4), 
+	wednesday_end varchar(4), 
+	thursday_start varchar(4), 
+	thursday_end varchar(4), 
+	friday_start varchar(4), 
+	friday_end varchar(4), 
+	saturday_start varchar(4), 
+	saturday_end varchar(4), 
+	sunday_start varchar(4), 
+	sunday_end varchar(4));
+
+create table pwd_reset(
+	id int not null auto_increment primary key,
+	link varchar(36),
+	email varchar(30),
+	date_application timestamp 
+);
+
+//an alternative extra table with time start_time, end_time, day (All, Mon-Sun) and run the query 1 or 7 times!
+
+insert into users (username,password) values ('Ross',md5('starbucks'));
+insert into users (username,password) values ('Estelle',md5('tetelle'));
+
+insert into sensors (sensorname,phonenumber,userref) values ('Hallway','123',1);
+insert into sensors (sensorname,phonenumber,userref) values ('Kitchen','456',1);
+insert into sensors (sensorname,phonenumber,userref) values ('Hallway','789',2);
+insert into sensors (sensorname,phonenumber,userref) values ('Hallway','101',2);

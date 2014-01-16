@@ -1,0 +1,82 @@
+go http://127.0.0.1:5000/
+
+follow /new_user
+fv 2 username 'Coco lapin'
+fv 2 pwd1 'carotte'
+fv 2 pwd2 'carotte'
+submit
+
+follow /about
+follow /contact
+follow /
+
+fv 2 username 'Coco lapin'
+fv 2 password 'test'
+submit
+
+fv 2 username 'Coco lapin'
+fv 2 password 'carotte'
+submit
+
+follow /about
+follow /contact
+fv 2 comments 'automated email for testing'
+submit
+
+follow /settings
+
+fv 3 sensorname 'cachette'
+fv 3 sensorcontact '777'
+submit
+
+
+fv 2 email 'coco@rabbithole.org'
+fv 2 phone '(0151) 3368270'
+fv 2 alert_hours 0
+fv 2 alert_mins 30
+submit
+
+fv 2 start_time '0930'
+fv 2 end_time '1730'
+submit
+
+follow /reset_schedule
+
+fv 2 monday_start '0800'
+fv 2 tuesday_start '0830'
+fv 2 wednesday_start '0900'
+fv 2 thursday_start '0930'
+fv 2 friday_start '1000'
+fv 2 saturday_start '1030'
+fv 2 sunday_start '1100'
+fv 2 monday_end '1900'
+fv 2 tuesday_end '1830'
+fv 2 wednesday_end '1800'
+fv 2 thursday_end '1730'
+fv 2 friday_end '1700'
+fv 2 saturday_end '1630'
+fv 2 sunday_end '1600'
+submit
+
+fv 2 1 'on'
+submit
+fv 2 1 'off'
+submit
+
+follow /delete_sensor/
+
+follow /logout
+
+go http://127.0.0.1:5000/api/notify/123
+go http://127.0.0.1:5000/api/notify/456
+go http://127.0.0.1:5000/api/ping/123
+go http://127.0.0.1:5000/api/ping/456
+
+follow /reset_password
+fv 2 1 'estellej@gmail.com'
+submit
+
+go http://127.0.0.1:5000/password/b9eb0e46-0a4c-4682-9209-67eb213d0c24
+fv 2 1 'tetelle'
+fv 2 2 'tetelle'
+submit

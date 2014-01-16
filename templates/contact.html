@@ -1,0 +1,33 @@
+<!-- set cookie -->
+
+
+{% extends "layout.html" %}
+
+{% block jumbo %}
+
+<div align="center">
+<h2 class="form-signin-heading">Contact</h2>
+
+<form class="form-signin" method="POST">
+	<label>Your name:&nbsp;<input type="text" name="name" class="form-control" placeholder="Name"
+	{% if userdetails %}
+ 		value="{{userdetails['username']}}"
+	{% endif %}	
+	></label>
+
+	<label>Your email:&nbsp;<input type="text" name="email" class="form-control" placeholder="Email" required
+	{% if userdetails %}
+ 		value="{{userdetails['email']}}"
+	{% endif %}	
+	></label>
+
+	<label>Comments:&nbsp;<textarea rows="8" cols="22" name="comments" class="form-control" placeholder="Comments" required></textarea></label><br>
+
+	<label><button class="btn btn-lg btn-success" type="submit">Send</button></label>
+</form>
+{% if errors %}
+	<p style="text-align:center; color:#dd0000">{{errors}}</p>
+{% endif %}
+</div>  
+
+{% endblock %}

@@ -1,0 +1,430 @@
+<!-- bit missing: calculate difference in date-->
+
+
+{% extends "layout.html" %}
+{% block jumbo %}
+      <style> 
+      .error {color: red;display:inline;}
+      </style>
+
+      <!--the dictionary mysettings contains all saved values, 
+      values: mysettings['switches'] [[name,status,id,ping,notify,alert,timediff],...] where status is 'off' or 'on' 
+                                                               and alert is 'ok' or 'warning' (show timediff then) 
+              mysettings['start_times'] [-] or [ , , , , , , ] [monday,tuesday,wednesday,thurday,friday,saturday,sunday]
+              mysettings['end_times']   [-] or [ , , , , , , ]  single value for 'Simple' schedule, everyday the same
+              mysettings['times']       set to 'Simple' (1 value for times) or 'Advanced' (every day, 7 values)
+      -->
+      <div class="alert alert-danger">
+          This space shows any warning messages<br>
+          {% if mysettings['switches'] %}
+              {% for s in mysettings['switches'] %} 
+                {% if s[5]=='warning' and s[1]=='on' and s[6]!='now'%}
+                Device <strong>{{s[0]}}</strong> : 
+                has not sent a ping in {{s[6]}}<br>
+                {% endif %}
+              {% endfor %}
+          {% endif %}
+          <!--You are not currently receiving alerts for <strong>'Hallway'</strong> and we have not received a notification from your WeMo in 7 hours-->
+      </div>
+
+
+      <form class="form form-inline" method="post">
+
+
+      <div class="row">
+          <div class="col-md-2 rb" style="margin: 10px;min-height:150px;">
+              <h3>Sensors</h3> 
+              <div><a href="#add" data-toggle="modal"><button type="button" class="btn btn-primary btn-small">
+              <span class="glyphicon glyphicon-plus"></span> Add
+              </button></a></div>
+              <!-- end bit that I added -->
+          </div>
+          <div class="col-md-8" style="margin: 10px;">
+
+              <!-- added -->
+              {% if mysettings['switches'] %}
+                {%for s in mysettings['switches']%} 
+                  <h4><div class="make-switch switch-small">
+                  <input type="checkbox" name="sensor_number[{{s[2]}}]" 
+                  {%if s[1]=='on'%} checked{%endif%}
+                  ></div>&nbsp;
+                  {{s[0]}}{%if s[1]=='on'%}<small> last triggered {{s[6]}} </small>{%endif%}
+                  <!-- could be added here: button to update date? -->
+                  <a href="/delete_sensor/{{s[2]}}"><span class="glyphicon glyphicon-trash" style="font-size:0.9em">&nbsp;</span></a></h4>
+                {% endfor %}
+              {% endif %}
+              <!-- end added -->
+        </div>
+      </div>
+
+      <hr/>
+
+      <div class="row">
+          <div class="col-md-2 rb" style="margin: 10px; min-height:240px;">
+              <h3>Schedule</h3>
+              
+              {% if errors %}
+                <p style="color:#dd0000">
+                {% for err in errors %}
+                  {% if err!="" %}
+                  {{err}}</br>
+                  {%endif%}
+                {% endfor %}
+                 </p>
+              {%endif%}
+          </div>
+          <div class="col-md-8" style="margin: 10px;">
+            <ul class="nav nav-tabs">
+              <li class="active"><a href="#simple" data-toggle="tab">Simple</a></li>
+              <li><a href="#advanced" data-toggle="tab">Advanced</a></li>
+            </ul>
+            <div class="tab-content">
+              <div class="tab-pane  active tabbox" id="simple">
+                  <strong>Every day</strong><br/><br/>
+                  <table width="100%">
+                      <tr>
+                          <td>
+                              Start time
+                          </td>
+                          <td>
+                            <input type="text" name="start_time" 
+                            class="form-control" placeholder="e.g. 0800"
+                            {%if mysettings['times']=='Simple' %}
+                                  {% if mysettings['start_times'][0]!= "" and mysettings['start_times'][0] != None %} 
+                                  value="{{mysettings['start_times'][0]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['start_time'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['start_time']}}</span>
+                                  {%else%} style="width:30%;">{% endif %}
+                            {% else %} style="width:30%;"> 
+                            {% endif %}
+                          </td>
+                      </tr>
+                      <tr>
+                          <td>End time</td>
+                          <td>
+                            <input type="text" name="end_time" 
+                            placeholder="e.g. 1730" class="form-control" 
+                            {%if mysettings['times']=='Simple' %}
+                                {% if mysettings['end_times'][0]!= "" and mysettings['end_times'][0]!=None %} 
+                                value="{{mysettings['end_times'][0]}}"
+                                {%endif%}
+                                {% if errors and errors['end_time'] %} 
+                                style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                <span class="error">{{errors['end_time']}}</span>
+                                {%else%} style="width:30%;">{%endif%}
+                            {%else%} style="width:30%;">
+                            {%endif%}
+                          </td>
+                      </tr>     
+                      <tr>
+                        <td>&nbsp;</td>
+                        <td>Choose a simple schedule or advanced.<br>Fill both fields: start time and end time (format HHMM)
+                          <br>If you select 'advanced' make sure to leave these 2 fields blank 
+                          &nbsp;<a href="/reset_schedule" style="text-decoration:none;" class="pull-right"><span class="glyphicon glyphicon-off"></span>&nbsp;Reset </a>
+                        </td>
+                      </tr>                 
+                  </table>
+                </div>
+                                    
+                <div class="tab-pane tabbox" id="advanced">
+                  <table width="100%">
+                      <tr>
+                          <td>
+                              Monday
+                          </td>
+                          <td>
+                            <input type="text" name="monday_start" class="form-control" placeholder="e.g. 0800"
+                            {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['start_times'][0]!= "" and mysettings['start_times'][0] != None %} 
+                                  value="{{mysettings['start_times'][0]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['monday_start'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['monday_start']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                            {% else %} style="width:30%;display:inline;"> 
+                            {% endif %}
+                            - <input type="text" name="monday_end" class="form-control"  placeholder="e.g. 1700" 
+                            {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['end_times'][0]!= "" and mysettings['end_times'][0] != None %} 
+                                  value="{{mysettings['end_times'][0]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['monday_end'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['monday_end']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                            {% else %} style="width:30%;display:inline;"> 
+                            {% endif %}  
+                          </td>
+                          <td>Saturday</td>
+                          <td>
+                              <input type="text" name="saturday_start" class="form-control"  placeholder="e.g. 0800" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['start_times'][5]!= "" and mysettings['start_times'][5] != None %} 
+                                  value="{{mysettings['start_times'][5]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['saturday_start'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['saturday_start']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+                              -
+                              <input type="text" name="saturday_end" class="form-control"  placeholder="e.g. 1700" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['end_times'][5]!= "" and mysettings['end_times'][5] != None %} 
+                                  value="{{mysettings['end_times'][5]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['saturday_end'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['saturday_end']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+
+                          </td>
+                      </tr>
+                      <tr>
+                          <td>Tuesday</td>
+                          <td>
+                              <input type="text" name="tuesday_start" class="form-control" placeholder="e.g. 0800" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['start_times'][1]!= "" and mysettings['start_times'][1] != None %} 
+                                  value="{{mysettings['start_times'][1]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['tuesday_start'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['tuesday_start']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+                              - <input type="text" name="tuesday_end" class="form-control" placeholder="e.g. 1700" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['end_times'][1]!= "" and mysettings['end_times'][1] != None %} 
+                                  value="{{mysettings['end_times'][1]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['tuesday_end'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['tuesday_end']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                            {% else %} style="width:30%;display:inline;"> 
+                            {% endif %}
+                          </td>
+                          <td>Sunday</td>
+                          <td>
+                              <input type="text" name="sunday_start" class="form-control" placeholder="e.g. 0800" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['start_times'][6]!= "" and mysettings['start_times'][6] != None %} 
+                                  value="{{mysettings['start_times'][6]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['sunday_start'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['sunday_start']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                            {% else %} style="width:30%;display:inline;"> 
+                            {% endif %}
+                            - <input type="text" name="sunday_end" class="form-control" placeholder="e.g. 1700" 
+                            {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['end_times'][6]!= "" and mysettings['end_times'][6] != None %} 
+                                  value="{{mysettings['end_times'][6]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['sunday_end'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['sunday_end']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                            {% else %} style="width:30%;display:inline;"> 
+                            {% endif %}
+
+                          </td>                          
+                      </tr>
+                      <tr>
+                          <td>Wednesday</td>
+                          <td>
+                              <input type="text" name="wednesday_start" class="form-control" placeholder="e.g. 0800" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['start_times'][2]!= "" and mysettings['start_times'][2] != None %} 
+                                  value="{{mysettings['start_times'][2]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['wednesday_start'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['wednesday_start']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+                              -
+                              <input type="text" name="wednesday_end" class="form-control" placeholder="e.g. 1700" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['end_times'][2]!= "" and mysettings['end_times'][2] != None %} 
+                                  value="{{mysettings['end_times'][2]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['wednesday_end'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['wednesday_end']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+                          </td>
+                          <td></td><td></td>
+                      </tr>
+                      <tr>
+                          <td>Thursday</td>
+                          <td>
+                              <input type="text" name="thursday_start" class="form-control"  placeholder="e.g. 0800" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['start_times'][3]!= "" and mysettings['start_times'][3] != None %} 
+                                  value="{{mysettings['start_times'][3]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['thursday_start'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['thursday_start']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+                               -
+                              <input type="text" name="thursday_end" class="form-control" placeholder="e.g. 1700" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['end_times'][3]!= "" and mysettings['end_times'][3] != None %} 
+                                  value="{{mysettings['end_times'][3]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['thursday_end'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['thursday_end']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+                          </td>
+                          <td></td><td>&nbsp;All times format HHMM</td>
+                      </tr>
+                      <tr>
+                          <td>Friday</td>
+                          <td>
+                              <input type="text" name="friday_start" class="form-control" placeholder="e.g. 0800" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['start_times'][4]!= "" and mysettings['start_times'][4] != None %} 
+                                  value="{{mysettings['start_times'][4]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['friday_start'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['friday_start']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+                              -
+                              <input type="text" name="friday_end" class="form-control" placeholder="e.g. 1700" 
+                              {%if mysettings['times']=='Advanced' %}
+                                  {% if mysettings['end_times'][4]!= "" and mysettings['end_times'][4] != None %} 
+                                  value="{{mysettings['end_times'][4]}}"
+                                  {% endif %}  
+                                  {% if errors and errors['friday_end'] %} 
+                                  style="width:30%;border: solid 1px red;color:red;display:inline;">
+                                  <span class="error">{{errors['friday_end']}}</span>
+                                  {%else%} style="width:30%;display:inline;">{% endif %}
+                              {% else %} style="width:30%;display:inline;"> 
+                              {% endif %}
+                            </td>
+                          <td></td><td></td>
+                      </tr>                                  
+                  </table>
+                </div>                
+              </div>
+            </div>
+        </div>
+
+      <hr/>
+
+      <div class="row">
+          <div class="col-md-2 rb" style="margin: 10px; min-height: 160px;">
+              <h3>Alerts</h3>
+              <div>&nbsp;</div>
+          </div>
+          <div class="col-md-div8" style="margin: 10px;">
+
+                <div class="control-group">
+                  Email me at
+                  <input type="email" name="email" class="form-control" id="exampleInputEmail1" placeholder="Enter email" style="width:50%;" 
+                  {% if userdetails['email'] %}
+                   value="{{userdetails['email']}}"
+                  {% endif %}
+                  >
+                </div>
+
+                <div class="control-group" style="margin-top:10px;">
+                  Send me a text message at
+                  <input type="text" name="phone" class="form-control" id="exampleInputEmail1" placeholder="Enter phone number" style="width:50%;" 
+                  {% if userdetails['phone'] %}
+                   value="{{userdetails['phone']}}"
+                  {% endif %}
+                  > 
+                </div>
+
+                <div class="control-group" style="margin-top:10px;">
+                  If there is no motion for <input type="text" name="alert_hours" id="exampleInputEmail1" style="width:40px;"{% if userdetails['alert_hours'] %}
+                   value="{{userdetails['alert_hours']}}"
+                  {% else %}
+                  value=0
+                  {% endif %}>&nbsp;hours and&nbsp;<input type="text" name="alert_mins" id="exampleInputEmail1" style="width:40px;" 
+                  {% if userdetails['alert_minutes'] %}
+                   value="{{userdetails['alert_minutes']}}"
+                  {% else %}
+                  value=0
+                  {% endif %} 
+                  > minutes
+                </div>   
+          </div>
+      </div> 
+
+      <div class="row">
+        <div class="col-md-2"></div>
+        <div class="col-md-8">
+                          <div class="form-actions">
+                  <button class="btn btn-primary">Save</button>
+                </div>
+
+        </div>
+      </div> <!-- row -->
+
+          </form>
+
+
+    <!-- bit that I added for a modal window to pop up -->
+    <div class="modal fade" id="add" role="dialog">
+      <div class="modal-dialog">
+        <div class="modal-content">
+          <form class="form-horizontal" method="post" action="{{url_for('add_sensor')}}">
+            <div class="pn-header"><h4>Add a sensor</h4>
+            </div>  
+          
+            <div class="modal-body"> 
+              <div class="form-group">  
+                <label for="add-sensorname" class="control-label">New Sensor Name: </label>
+                <input type="text" name="sensorname" placeholder="Name" size="20" required>
+                <br>
+                <label for="add-sensorcontact" class="control-label">New Contact Number: </label>
+                <input type="text" name="sensorcontact" placeholder="Phone Number" size="17" required>
+              </div>
+            </div>
+            
+            <div class="modal-footer">
+              <input type="submit" class="btn btn-primary">
+              <a class="btn btn-danger" data-dismiss="modal">Close</a>
+            </div>
+          </form>
+        </div>
+      </div>  
+    </div>
+    <!-- end bit added -->
+
+
+    <script type="text/javascript">
+      $(document).ready(function(){
+        $('#myTab a').click(function (e) {
+          e.preventDefault()
+          $(this).tab('show')
+        })
+        $('#myTab a:first').tab('show')
+      })
+    </script>
+
+{% endblock %}
